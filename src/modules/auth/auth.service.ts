@@ -2,30 +2,24 @@ import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/
 import { JwtService } from "@nestjs/jwt";
 import { Role, User } from "@prisma/client";
 
-import { MESSAGES } from "shared/constants/messages.constants";
-import { UserService } from "modules/user/user.service";
-import { PrismaService } from "services/prisma/prisma.service";
-import { AuthHelpers } from "shared/helpers/auth.helpers";
 import { GLOBAL_CONFIG } from "configs/global.config";
-import { MailService } from "services/mail/mail.service";
-import { MAIL_TEMPLATES } from "services/mail/mail.constants";
 import { AuthResponseDTO, ForgotPasswordDTO, LoginDTO, ResetPasswordDTO } from "modules/auth/auth.dto";
-import { MINUTE } from "shared/constants/time.constants";
-import { SMSService } from "services/sms/sms.service";
-import { PhoneVerificationRepo } from "modules/phone-verification/phone-verification.repo";
-import { CommonHelpers } from "shared/helpers/common.helpers";
+import { UserService } from "modules/user/user.service";
+import { MAIL_TEMPLATES } from "services/mail/mail.constants";
+import { MailService } from "services/mail/mail.service";
+import { PrismaService } from "services/prisma/prisma.service";
+import { MESSAGES } from "shared/constants/messages.constants";
+import { AuthHelpers } from "shared/helpers/auth.helpers";
 
-import { PhoneDTO, RegisterUserDTO, VerifyPhoneDTO } from "./auth.dto";
+import { RegisterUserDTO } from "./auth.dto";
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
-    private phoneVerificationRepo: PhoneVerificationRepo,
     private prisma: PrismaService,
     private jwtService: JwtService,
     private mailService: MailService,
-    private smsService: SMSService
   ) {}
 
   public async login(loginUserDTO: LoginDTO, role: Role): Promise<AuthResponseDTO> {
@@ -59,42 +53,6 @@ export class AuthService {
       user: payload,
       accessToken: accessToken,
     };
-  }
-
-  public async sendOtp(data: PhoneDTO): Promise<void> {
-    if (await this.userService.checkExistingPhone(data.phone)) {
-      throw new BadRequestException(MESSAGES.EU_0000007);
-    }
-
-    const otp = AuthHelpers.generateOtp();
-    const newPhoneVerification = {
-      ...data,
-      otp,
-      expiredAt: new Date(Date.now() + MINUTE),
-    };
-
-    await this.phoneVerificationRepo.create(newPhoneVerification);
-
-    await this.smsService.sendSMS(data.phone, CommonHelpers.formatMessageString(MESSAGES.IU_0000002, otp));
-  }
-
-  public async verifyOtp(data: VerifyPhoneDTO): Promise<void> {
-    const phoneData = await this.prisma.phoneVerification.findFirst({
-      where: {
-        phone: data.phone,
-        otp: data.otp,
-        verifiedAt: null,
-        expiredAt: {
-          gte: new Date(),
-        },
-      },
-    });
-
-    if (!phoneData) {
-      throw new BadRequestException(MESSAGES.EU_0000013);
-    }
-
-    await this.phoneVerificationRepo.update({ where: { id: phoneData.id }, data: { verifiedAt: new Date() } });
   }
 
   public async register(user: RegisterUserDTO): Promise<User> {

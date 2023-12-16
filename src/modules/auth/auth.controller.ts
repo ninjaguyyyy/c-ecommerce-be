@@ -1,14 +1,13 @@
-import { Body, Controller, Get, HttpCode, Param, Post } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post } from "@nestjs/common";
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { User } from "@prisma/client";
 
+import { HasRoles } from "modules/auth/auth.has-roles.decorator";
 import { BLACK_LIST_FIELDS, Role } from "shared/constants/global.constants";
 import { CommonHelpers } from "shared/helpers/common.helpers";
-import { HasRoles } from "modules/auth/auth.has-roles.decorator";
 
+import { AuthResponseDTO, ForgotPasswordDTO, LoginDTO, RegisterUserDTO, ResetPasswordDTO } from "./auth.dto";
 import { AuthService } from "./auth.service";
-import { AuthResponseDTO, ForgotPasswordDTO, LoginDTO, ResetPasswordDTO } from "./auth.dto";
-import { PhoneDTO, RegisterUserDTO, VerifyPhoneDTO } from "./auth.dto";
 
 @ApiTags("auth")
 @Controller("auth")
@@ -22,19 +21,6 @@ export class AuthController {
   @ApiResponse({ type: AuthResponseDTO })
   async loginUser(@Body() user: LoginDTO): Promise<AuthResponseDTO> {
     return this.authService.login(user, Role.USER);
-  }
-
-  @Post("/user/send-otp")
-  @HasRoles(Role.PUBLIC)
-  async sendOtp(@Body() data: PhoneDTO): Promise<void> {
-    await this.authService.sendOtp(data);
-  }
-
-  @Post("/user/verify-otp")
-  @HttpCode(200)
-  @HasRoles(Role.PUBLIC)
-  async verifyOtp(@Body() data: VerifyPhoneDTO): Promise<void> {
-    await this.authService.verifyOtp(data);
   }
 
   @Post("/user/register")

@@ -34,32 +34,7 @@ export class UserService {
   }
 
   async findAll(query: UserListRequestDTO): Promise<UserListResponseDTO[]> {
-    const { take, skip, sortByField } = CommonHelpers.transformPaginationQuery(query, Prisma.UserScalarFieldEnum);
-    const filters: Prisma.Enumerable<Prisma.UserWhereInput> = [
-      {
-        name: {
-          contains: query.search || undefined,
-          mode: "insensitive",
-        },
-      },
-      {
-        furiganaName: {
-          contains: query.search || undefined,
-          mode: "insensitive",
-        },
-      },
-    ];
-
-    const data = await this.userRepo.findAll({
-      take,
-      skip,
-      where: {
-        role: Role.User,
-        OR: query.search ? filters : undefined,
-      },
-      orderBy: sortByField,
-    });
-
+    const data = [];
     const userList = plainToInstance(UserListResponseDTO, data, { excludeExtraneousValues: true });
 
     return userList;

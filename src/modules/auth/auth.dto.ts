@@ -1,9 +1,8 @@
-import { HouseType, User } from "@prisma/client";
-import { IsMobilePhone, Matches } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
+import { User } from "@prisma/client";
 import { Transform } from "class-transformer";
+import { IsMobilePhone, Matches } from "class-validator";
 
-import { MESSAGES } from "shared/constants/messages.constants";
 import {
   FURIGANA_REGEX,
   JP_LONG_LOCALE,
@@ -12,8 +11,9 @@ import {
   PASSWORD_REGEX,
   POSTCODE_REGEX,
 } from "shared/constants/global.constants";
+import { MESSAGES } from "shared/constants/messages.constants";
+import { EmailField, StringField } from "shared/decorators/dto.decorator";
 import { CommonHelpers } from "shared/helpers/common.helpers";
-import { EmailField, EnumField, StringField } from "shared/decorators/dto.decorator";
 
 export class AuthResponseDTO {
   @ApiProperty()
@@ -58,18 +58,7 @@ export class RegisterUserDTO extends PhoneDTO {
 
   @StringField()
   address: string;
-
-  @StringField({}, { min: 1, max: 256 })
-  streetAddress: string;
-
-  @StringField({ optional: true }, { min: 1, max: 256 })
-  apartmentName: string;
-
-  @StringField({ optional: true })
-  roomNumber: string;
-
-  @EnumField(HouseType)
-  houseType: HouseType;
+ 
 }
 
 export class LoginDTO {
