@@ -1,0 +1,245 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int        @id @default(autoincrement())
+  password        String
+  email           String?    @unique
+  emailVerifiedAt DateTime?  @map(name: "email_verified_at")
+  name            String?
+  furiganaName    String?    @map(name: "furigana_name")
+  phone           String?    @unique
+  image           String?
+  postCode        String?    @map("post_code")
+  address         String?
+  streetAddress   String?    @map("street_address")
+  apartmentName   String?    @map("apartment_name")
+  roomNumber      String?    @map("room_number")
+  houseType       HouseType? @map("house_type")
+  role            Role       @default(User)
+  token           String     @unique
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @default(now()) @map(name: "updated_at")
+
+  GarbageRegistration GarbageRegistration[]
+  ChatRoomUser        ChatRoomUser[]
+  Reminder            Reminder[]
+  ChatMessage         ChatMessage[]
+  UserSetting         UserSetting[]
+
+  @@map(name: "users")
+}
+
+model PhoneVerification {
+  id         Int       @id @default(autoincrement())
+  phone      String
+  otp        String
+  verifiedAt DateTime? @map(name: "verified_at")
+  expiredAt  DateTime? @map(name: "expired_at")
+  createdAt  DateTime  @default(now()) @map(name: "created_at")
+
+  @@map(name: "phone_verification")
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @default(now()) @map(name: "updated_at")
+
+  Garbage Garbage[]
+
+  @@map(name: "categories")
+}
+
+model Garbage {
+  id         Int       @id @default(autoincrement())
+  categoryId Int       @map("category_id")
+  Category   Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  name  String
+  price Decimal?
+  point Decimal?
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @default(now()) @map(name: "updated_at")
+
+  GarbageRegistrationDetail GarbageRegistrationDetail[]
+
+  @@map(name: "garbage")
+}
+
+model GarbageRegistration {
+  id     String             @id @unique
+  userId Int                @map("user_id")
+  User   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type   RegistrationType
+  date   DateTime           @db.Date
+  status RegistrationStatus
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @default(now()) @map(name: "updated_at")
+
+  GarbageRegistrationDetail GarbageRegistrationDetail[]
+
+  @@map(name: "garbage_registrations")
+}
+
+model GarbageRegistrationDetail {
+  id                  Int                 @id @default(autoincrement())
+  registrationId      String              @map("registration_id")
+  GarbageRegistration GarbageRegistration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+
+  garbageId Int     @map("garbage_id")
+  garbage   Garbage @relation(fields: [garbageId], references: [id], onDelete: Cascade)
+
+  price Decimal?
+
+  imageFront String? @map("image_front")
+  imageBack  String? @map("image_back")
+  imageLeft  String? @map("image_left")
+  imageRight String? @map("image_right")
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map(name: "garbage_registration_details")
+}
+
+model GarbageCollectionSchedule {
+  id       Int       @id @default(autoincrement())
+  dateFrom DateTime  @db.Date
+  dateTo   DateTime? @db.Date
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map(name: "garbage_collection_schedules")
+}
+
+model Announcement {
+  id      Int    @id @default(autoincrement())
+  title   String
+  content String
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map(name: "announcements")
+}
+
+model Reminder {
+  id      Int    @id @default(autoincrement())
+  userId  Int    @map("user_id")
+  User    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title   String
+  content String
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map(name: "reminder")
+}
+
+model ChatRoom {
+  id   Int     @id @default(autoincrement())
+  name String?
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @default(now()) @map(name: "updated_at")
+
+  ChatMessage  ChatMessage[]
+  ChatRoomUser ChatRoomUser[]
+
+  @@map(name: "chat_rooms")
+}
+
+model ChatMessage {
+  id       Int      @id @default(autoincrement())
+  roomId   Int      @map(name: "room_id")
+  ChatRoom ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId   Int      @map("user_id")
+  User     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  message String
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map(name: "chat_messages")
+}
+
+model ChatRoomUser {
+  roomId   Int      @map(name: "room_id")
+  ChatRoom ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  userId Int  @map("user_id")
+  User   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([roomId, userId])
+  @@map(name: "chat_rooms_users")
+}
+
+model AppSetting {
+  settingKey String   @id @map("setting_key")
+  name       String
+  value      String
+  dataType   DataType @map("data_type")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_settings")
+}
+
+model UserSetting {
+  userId     Int      @map("user_id")
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  settingKey String   @map("setting_key")
+  name       String
+  value      String
+  dataType   DataType @map("data_type")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@id([userId, settingKey])
+  @@map("user_settings")
+}
+
+enum Role {
+  User
+  Admin
+  SuperAdmin
+}
+
+enum RegistrationType {
+  Recycle
+  Waste
+}
+
+enum RegistrationStatus {
+  Draft
+  Confirming
+  Successful
+  Cancelled
+  SystemCancelled
+}
+
+enum DataType {
+  Text
+  Number
+  RichText
+}
+
+enum HouseType {
+  House
+  Apartment
+}
