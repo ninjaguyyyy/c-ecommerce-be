@@ -1,16 +1,15 @@
-import { Prisma, Role, User } from "@prisma/client";
 import { BadRequestException, Injectable } from "@nestjs/common";
+import { Prisma, Role, User } from "@prisma/client";
 import { plainToInstance } from "class-transformer";
 
-import { UserRepo } from "modules/user/user.repo";
-import { CommonHelpers } from "shared/helpers/common.helpers";
-import { MESSAGES } from "shared/constants/messages.constants";
-import { RegisterUserDTO } from "modules/auth/auth.dto";
-import { AuthHelpers } from "shared/helpers/auth.helpers";
-import { MailService } from "services/mail/mail.service";
 import { GLOBAL_CONFIG } from "configs/global.config";
+import { RegisterUserDTO } from "modules/auth/auth.dto";
+import { UserRepo } from "modules/user/user.repo";
 import { MAIL_TEMPLATES } from "services/mail/mail.constants";
+import { MailService } from "services/mail/mail.service";
+import { MESSAGES } from "shared/constants/messages.constants";
 import { BasePaginationResponseDTO } from "shared/dtos/base-pagination-response.dto";
+import { AuthHelpers } from "shared/helpers/auth.helpers";
 
 import { UserListRequestDTO } from "./dtos/user-request.dto";
 import { UserDetailResponseDTO, UserListResponseDTO } from "./dtos/user-response.dto";
@@ -34,7 +33,8 @@ export class UserService {
   }
 
   async findAll(query: UserListRequestDTO): Promise<UserListResponseDTO[]> {
-    const data = [];
+    const data = await this.userRepo.findAll({});
+
     const userList = plainToInstance(UserListResponseDTO, data, { excludeExtraneousValues: true });
 
     return userList;

@@ -19,7 +19,7 @@ export class UserController {
   constructor(private userService: UserService) {}
 
   @Get()
-  @HasRoles(Role.ADMIN)
+  @HasRoles(Role.PUBLIC)
   @ApiOkResponse({ type: [UserListResponseDTO] })
   async getAll(@Query() query: UserListRequestDTO): Promise<UserListResponseDTO[]> {
     return await this.userService.findAll(query);
